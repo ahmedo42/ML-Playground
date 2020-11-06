@@ -21,5 +21,3 @@ Implementation of seminal papers and ideas in Deep Learning and Artificial Intel
   <li> Transformer </li>
   <li> Seq2Seq </li> 
   <li> GPT </li>
- 
-## TBD
