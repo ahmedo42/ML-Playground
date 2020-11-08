@@ -2,18 +2,16 @@ Implementation of seminal papers and ideas in Deep Learning and Artificial Intel
 
 
 ## Computer Vision
-<ul>
-  <li> VGG16 </li>
-  <li> ResNet </li> 
-  <li> Inception </li>
-  <li> MobileNet </li>
-  <li> FCN </li>
-  <li> DeepLab </li>
-  <li> GAN </li>
-  <li> CycleGan </li> 
-  <li> RCNN </li>
-  <li> YOLO </li>
-</ul>
+* VGG16  [[Paper](https://arxiv.org/abs/1409.1556)] [[Code](./VGG)]
+* ResNet 
+* Inception 
+* MobileNet 
+* FCN 
+* DeepLab 
+* GAN 
+* CycleGan  
+* RCNN 
+* YOLO 
 
 ## Natural Language Processing
 <ul>
