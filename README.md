@@ -4,7 +4,7 @@ Implementation of seminal papers and ideas in Deep Learning and Artificial Intel
 ## Computer Vision
 * VGG16  [[Paper](https://arxiv.org/abs/1409.1556)] [[Code](./VGG)]
 * ResNet 
-* Inception 
+* GoogLenet 
 * MobileNet 
 * FCN 
 * DeepLab 
@@ -14,8 +14,9 @@ Implementation of seminal papers and ideas in Deep Learning and Artificial Intel
 * YOLO 
 
 ## Natural Language Processing
-<ul>
-  <li> Word2Vec </li>
-  <li> Transformer </li>
-  <li> Seq2Seq </li> 
-  <li> GPT </li>
+
+* Word2Vec
+* Transformer
+* Seq2Seq
+* GPT 
+  
