@@ -11,7 +11,7 @@ from GoogLeNet import GoogLeNet
 parser = argparse.ArgumentParser(
     description="configure training hyperparameters")
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
-parser.add_argument('--batch_size', type=int, default=64)
+parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--aux', type=bool, default=False,
                     help='auxillary classifiers')
@@ -24,22 +24,24 @@ writer = SummaryWriter()
 def validate(val_loader, model, criterion):
 
     model.eval()
-    correct = 0
-    total = 0
-
+    total = correct = loss = 0
     for images, labels in test_loader:
         images = images.cuda()
-        outputs = model(images)
+        labels = labels.cuda()
+        outputs,aux1,aux2 = model(images)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
-        correct += (predicted.cpu() == labels).sum()
+        correct += (predicted.cpu() == labels.cpu()).sum()
+        loss += criterion(outputs,labels)
+        if args.aux:
+            loss += criterion(aux1,labels) + criterion(aux2,labels)
 
     acc = 100 * correct/total
-    print("avg acc: %f" % (acc))
-    return acc
+    return loss , acc
 
 
 def train(train_loader, model,criterion,optimizer,scheduler,epochs):
+    best_acc = 0
     for epoch in range(epochs):
         for images, labels in train_loader:
             images = images.cuda()
@@ -47,18 +49,24 @@ def train(train_loader, model,criterion,optimizer,scheduler,epochs):
             optimizer.zero_grad()
             output,aux1,aux2 = model(images)
             loss = criterion(output, labels)
-            aux_loss = 0
             if args.aux:
-                aux_loss = 0.3*aux1 + 0.3*aux2
-            avg_loss += loss + aux_loss
-            cnt += 1
+                aux1_loss = 0.3*criterion(aux1,labels) 
+                aux2_loss = 0.3*criterion(aux2,labels) 
+                aux1_loss.backward()
+                aux2_loss.backward()
             loss.backward()
             optimizer.step()
-        val_acc = validate(test_loader, model, criterion)
+        val_loss , val_acc = validate(test_loader, model, criterion)
+        train_loss , train_acc = validate(train_loader,model,criterion)
+        writer.add_scalar('Loss/Train',train_loss,epoch)
+        writer.add_scalar('Accuracy/Train',train_acc,epoch)
+        writer.add_scalar('Loss/Val',val_loss,epoch)
+        writer.add_scalar('Accuracy/Val',val_acc,epoch)
         if val_acc > best_acc:
                 best_acc = val_acc
                 torch.save(model.state_dict(), 'googlenet_cifar10.pkl')
-        scheduler.step(avg_loss)
+        print("Epoch: {} ,validation acc: {} ,best acc: {}".format(epoch,val_acc,best_acc))
+        scheduler.step()
 
 
 if __name__ == "__main__":
@@ -90,7 +98,9 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=0.9,weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+    if torch.cuda.is_available:
+      torch.cuda.set_device(0)
     model.cuda()
-    criterion.cuda()
     train(train_loader,model,criterion,optimizer,scheduler,EPOCHS)
     writer.flush()
+    print("Compeleted Training")
