@@ -4,7 +4,7 @@ Implementation of seminal papers and ideas in Deep Learning and Artificial Intel
 ## Computer Vision
 * VGG16  [[Paper](https://arxiv.org/abs/1409.1556)] [[Code](./VGG)]
 * ResNet 
-* GoogLenet 
+* GoogLenet [[Paper](https://arxiv.org/abs/1409.1556)] [[Code](./GoogLeNet)]
 * MobileNet 
 * FCN 
 * DeepLab 
