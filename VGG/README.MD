@@ -5,4 +5,3 @@
 
 ### the main contribution of VGG is to show that classification/localisation accuracy can be improved by increasing the depth of the CNN despite using small receptive field.
 
-### this archtiecture was used to achieve 92% accuracy on CIFAR10
