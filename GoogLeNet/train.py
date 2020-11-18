@@ -11,30 +11,27 @@ from GoogLeNet import GoogLeNet
 parser = argparse.ArgumentParser(
     description="configure training hyperparameters")
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
-parser.add_argument('--batch_size', type=int, default=32)
+parser.add_argument('--batch_size', type=int, default=8)
 parser.add_argument('--epochs', type=int, default=100)
-parser.add_argument('--aux', type=bool, default=False,
+parser.add_argument('--aux', type=bool, default=True,
                     help='auxillary classifiers')
-
 
 args = parser.parse_args()
 writer = SummaryWriter()
-
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def validate(val_loader, model, criterion):
 
     model.eval()
     total = correct = loss = 0
     for images, labels in test_loader:
-        images = images.cuda()
-        labels = labels.cuda()
+        images = images.to(device)
+        labels = labels.to(device)
         outputs,aux1,aux2 = model(images)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted.cpu() == labels.cpu()).sum()
         loss += criterion(outputs,labels)
-        if args.aux:
-            loss += criterion(aux1,labels) + criterion(aux2,labels)
 
     acc = 100 * correct/total
     return loss , acc
@@ -43,30 +40,38 @@ def validate(val_loader, model, criterion):
 def train(train_loader, model,criterion,optimizer,scheduler,epochs):
     best_acc = 0
     for epoch in range(epochs):
+        correct = 0
+        total = 0
+        train_loss = 0
         for images, labels in train_loader:
-            images = images.cuda()
-            labels = labels.cuda()
+            images = images.to(device)
+            labels = labels.to(device)
             optimizer.zero_grad()
             output,aux1,aux2 = model(images)
             loss = criterion(output, labels)
+            _, predicted = torch.max(output.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum()
+            aux1_loss = aux2_loss = 0
+            loss.backward(retain_graph=True)
             if args.aux:
                 aux1_loss = 0.3*criterion(aux1,labels) 
                 aux2_loss = 0.3*criterion(aux2,labels) 
-                aux1_loss.backward()
+                aux1_loss.backward(retain_graph=True)
                 aux2_loss.backward()
-            loss.backward()
+            train_loss += aux1_loss + aux2_loss + loss
             optimizer.step()
+        train_acc = 100* correct/total
         val_loss , val_acc = validate(test_loader, model, criterion)
-        train_loss , train_acc = validate(train_loader,model,criterion)
         writer.add_scalar('Loss/Train',train_loss,epoch)
         writer.add_scalar('Accuracy/Train',train_acc,epoch)
         writer.add_scalar('Loss/Val',val_loss,epoch)
         writer.add_scalar('Accuracy/Val',val_acc,epoch)
         if val_acc > best_acc:
                 best_acc = val_acc
-                torch.save(model.state_dict(), 'googlenet_cifar10.pkl')
+                torch.save(model.state_dict(), 'googlenet_cifar10.pth')
         print("Epoch: {} ,validation acc: {} ,best acc: {}".format(epoch,val_acc,best_acc))
-        scheduler.step()
+        scheduler.step(train_loss)
 
 
 if __name__ == "__main__":
@@ -97,9 +102,7 @@ if __name__ == "__main__":
     model = GoogLeNet(n_classes=10,aux_logits=args.aux)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=0.9,weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
-    if torch.cuda.is_available:
-      torch.cuda.set_device(0)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,verbose=True)
     model.cuda()
     train(train_loader,model,criterion,optimizer,scheduler,EPOCHS)
     writer.flush()
