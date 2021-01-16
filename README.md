@@ -15,7 +15,6 @@ Implementation of seminal papers and ideas in Deep Learning and Artificial Intel
 
 ## Natural Language Processing
 
-* Word2Vec
 * Transformer
 * Seq2Seq
 * GPT 
