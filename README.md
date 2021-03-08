@@ -15,7 +15,15 @@ Implementation of seminal papers and ideas in Deep Learning and Artificial Intel
 
 ## Natural Language Processing
 
-* Transformer
-* Seq2Seq
+* Transformer (original) 
 * GPT 
   
+## Reinforcement Learning
+
+* DQN
+* A2C
+
+## Metaheuristics
+
+* Simulated Annealing 
+* Ant Colony Optimization
